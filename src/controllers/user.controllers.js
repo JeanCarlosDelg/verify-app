@@ -105,7 +105,48 @@ const login = catchError(async(req, res) => {
 const getMe = catchError(async(req, res) => {
   const loggedUser = req.user
   return res.json(loggedUser)
-})
+});
+
+const resetPassword = catchError(async(req, res) => {
+  const { email, frontBaseUrl } = req.body
+  const user = await User.findOne({where: { email }})
+  if (!user) return res.status(401).json({ message: "User not found"})
+  const code = require('crypto').randomBytes(32).toString('hex')
+  const link = `${frontBaseUrl}/${code}`
+
+  await EmailCode.create({
+    code: code,
+    userId: user.id
+  })
+
+  await sendEmail({
+    to: email,
+    subject: 'Mensaje enviado desde el portafolio',
+    html: `
+    <h1>Para restablecer su contraseña haga cil en el siguiente enlace:</h1>
+    <a href="${link}">${link}</a>
+    `
+  })
+
+  return res.status(201).json({message: "revisa tu correo"});
+});
+
+const updatePassword = catchError(async(req, res) => {
+  const { code } = req.params
+  const { password } = req.body
+  const emailCode = await EmailCode.findOne({ where: { code } })
+  if (!emailCode) return res.status(401).json({ message: 'Invalid code' })
+
+  const encriptedPassword = await bcrypt.hash(password, 10)
+  const user = await User.update(
+    { password: encriptedPassword },
+    { where: { id: emailCode.userId }, returning: true }
+  )
+
+  await emailCode.destroy()
+
+  return res.json(user[1][0])
+});
 
 module.exports = {
     getAll,
@@ -115,5 +156,7 @@ module.exports = {
     update,
     verifyCode,
     login,
-    getMe
+    getMe,
+    resetPassword,
+    updatePassword
 }
