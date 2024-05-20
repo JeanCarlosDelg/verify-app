@@ -32,11 +32,11 @@ const create = catchError(async(req, res) => {
 
   await sendEmail({
     to: email,
-    subject: 'Mensaje enviado desde el portafolio',
+    subject: 'Message sent from the portfolio',
     html: `
     <h1>Hello, ${firstName} ${lastName}</h1>
     <h3>Thanks for sign up in user app</h3>
-    <p>para verificartu correo da click en el siguiente enlace:</p>
+    <p>To verify your email, click on the following link:</p>
     <a href="${link}">${link}</a>
     `
   })
@@ -89,7 +89,7 @@ const login = catchError(async(req, res) => {
   const { email, password } = req.body
   const user = await User.findOne({ where: { email }})
   if (!user) return res.status(401).json({ message: 'Invalid Credentials'})
-  if (!user.isVerified) return res.status(401).json({ message: 'Usuario no verificado' });
+  if (!user.isVerified) return res.status(401).json({ message: 'Unverified user' });
   const isValid = await bcrypt.compare(password, user.password)
   if (!isValid) return res.status(401).json({ message: ''})
 
@@ -121,9 +121,9 @@ const resetPassword = catchError(async(req, res) => {
 
   await sendEmail({
     to: email,
-    subject: 'Mensaje enviado desde el portafolio',
+    subject: 'Message sent from the portfolio',
     html: `
-    <h1>Para restablecer su contraseña haga cil en el siguiente enlace:</h1>
+    <h1>To reset your password, click on the following link:</h1>
     <a href="${link}">${link}</a>
     `
   })
